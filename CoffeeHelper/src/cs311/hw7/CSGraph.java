@@ -16,6 +16,7 @@ import java.util.HashMap;
 public class CSGraph implements Graph<Object, Object> {
 	Map<String, Vertex> vertices = new HashMap<String, Vertex>();
 	Map<Integer, Edge> edges = new HashMap<Integer, Edge>();
+	List<String> noPredecessors = new ArrayList<String>();
 	private boolean isDirected;
 	private int vertexID = 0,
 				edgeID = 0,
@@ -35,6 +36,7 @@ public class CSGraph implements Graph<Object, Object> {
 	public void addVertex(String vertexLabel, Object vertexData) {
 		Vertex vertex = new Vertex(this.vertexID, vertexData, vertexLabel);
 		vertices.put(vertexLabel, vertex);
+		if(isDirected) noPredecessors.add(vertexLabel);
 		this.vertexID++;
 		this.numVertices++;
 	}
@@ -63,6 +65,7 @@ public class CSGraph implements Graph<Object, Object> {
 			oppositeVertex.removeNeighbor(vertexLabel);
 			edges.remove(eID);
 		}
+		noPredecessors.remove(vertexLabel);
 		vertices.remove(vertexLabel);
 		this.numVertices--;
 	}
@@ -84,7 +87,10 @@ public class CSGraph implements Graph<Object, Object> {
 		sourceVertex.addEdge(this.edgeID);
 		targetVertex.addEdge(this.edgeID);
 		sourceVertex.addNeighbor(targetLabel, this.edgeID);
-		if(!isDirected) targetVertex.addNeighbor(sourceLabel, this.edgeID);
+		if(!isDirected) 
+			targetVertex.addNeighbor(sourceLabel, this.edgeID);
+		else
+			noPredecessors.remove(targetLabel);
 		this.edgeID++;
 		this.numEdges--;
 	}
@@ -133,13 +139,44 @@ public class CSGraph implements Graph<Object, Object> {
 
 	@Override
 	public List<String> topologicalSort() {
-		// TODO Auto-generated method stub
-		return null;
+		// If it isn't directed
+		if(!isDirected || noPredecessors.size() == 0) return null;
+		if(noPredecessors.size() == 1 || noPredecessors.size() == vertices.size()) return noPredecessors;
+		
+		// To make this work, we'll be following Kahn's algorithm and need a copy of the edges
+		// We can either make a list (which will make it slower) or just copy the map.
+		Map<Integer, Edge> edgeCopy = new HashMap<Integer, Edge>();
+		edgeCopy.putAll(edges);
+		List<String> verticesToProcess = new ArrayList<String>(noPredecessors);	
+		List<String> sortedVertices = new ArrayList<String>();
+		
+		// Time for the actual work
+		// Process: 
+		for(String vertexLabel : verticesToProcess){
+			sortedVertices.add(vertexLabel);
+			Vertex currentVertex = vertices.get(vertexLabel);
+			for(Integer edgeID : currentVertex.getEdges()){
+				edgeCopy.remove(edgeID);
+				Vertex targetVertex = vertices.get(edgeCopy.get(edgeID).getTargetLabel());
+				List<Integer> targetVertexEdges = targetVertex.getEdges();
+				boolean noMoreEdgesFlag = true;
+				// There might be a more elegant way of doing this
+				for(Integer eID : targetVertexEdges){
+					if(edgeCopy.containsKey(eID)){
+						noMoreEdgesFlag = false;
+						break;
+					}
+				}
+				if(noMoreEdgesFlag) verticesToProcess.add(targetVertex.getVertexLabel());
+			}
+		}
+		if(edgeCopy.size() > 0) return null;
+		return sortedVertices;
 	}
 
 	@Override
 	public List<String> shortestPath(String startLabel, String destLabel, EdgeMeasure<Object> measure) {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
