@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 
@@ -176,8 +177,54 @@ public class CSGraph implements Graph<Object, Object> {
 
 	@Override
 	public List<String> shortestPath(String startLabel, String destLabel, EdgeMeasure<Object> measure) {
+		// Basically implementing Dijkstras
+		// First things first, we need to go through every vertex and reset their values
+		List<String> path = new ArrayList<String>();
+		List<Vertex> unvisted = new ArrayList<Vertex>();
+		if(startLabel == destLabel){
+			path.add(startLabel);
+			return path;
+		}
+		if(edges.isEmpty()) return null;
+		for(Entry<String, Vertex> entry : vertices.entrySet()){
+			if(entry.getValue().getVertexLabel() == startLabel) 
+				entry.getValue().setDistance(0);
+			else
+				entry.getValue().setDistance(Double.MAX_VALUE);
+			entry.getValue().setPred(null);
+			entry.getValue().setVisited(false);
+			unvisted.add(entry.getValue());
+		}
+		Collections.sort(unvisted, new VertexComparator());
+		Vertex currentVertex = unvisted.get(0);
+		while(currentVertex != null){
+			if(currentVertex.getVertexLabel() == destLabel) break;
+			List<String> neighbors = currentVertex.getNeighbors();
+			for(String neighborString : neighbors){
+				Vertex neighbor = vertices.get(neighborString);
+				if(!neighbor.isVisited()){
+					Edge connectingEdge = edges.get(currentVertex.getNeighborEdge(neighborString));
+					Double tentativeDistance = currentVertex.getDistance() + measure.getCost(connectingEdge);
+					if(tentativeDistance < neighbor.getDistance()){
+						neighbor.setDistance(tentativeDistance);
+						neighbor.setPred(currentVertex);
+					}
+				}
+			}
+			currentVertex.setVisited(true);
+			unvisted.remove(0);
+			Collections.sort(unvisted, new VertexComparator());
+			currentVertex = unvisted.get(0);
+		}
 		
-		return null;
+		if(currentVertex.getVertexLabel() != destLabel) return null;
+		// Time to go through the preds and make the list
+		Vertex pred = currentVertex.getPred();
+		while(pred != null){
+			path.add(0, pred.getVertexLabel());
+			pred = pred.getPred();
+		}
+		return path;
 	}
 
 	@Override

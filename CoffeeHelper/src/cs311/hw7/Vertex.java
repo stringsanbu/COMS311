@@ -13,11 +13,16 @@ public class Vertex {
 	private int vertexID;
 	private Object vertexData;
 	private String vertexLabel;
-	private boolean visited;
 	private ArrayList<String> neighbors;
 	// This does not determine neighbors, but just used to easily remove vertices.
 	private ArrayList<Integer> associatedEdgeIDs;
 	private Map<String, Integer> neighborEdges;
+	
+	// Variables for Dijkstras
+	private boolean visited;
+	private double distance;
+	private Vertex pred;
+	
 	
 	/**
 	 * The constructor for the Vertex class. 
@@ -26,7 +31,9 @@ public class Vertex {
 	 * @param vertexData The vertexData supplied.
 	 */
 	public Vertex(int vertexID, Object vertexData, String vertexLabel) {
+		pred = null;
 		visited = false;
+		distance = 0;
 		associatedEdgeIDs = new ArrayList<Integer>();
 		neighbors = new ArrayList<String>();
 		neighborEdges = new HashMap<String, Integer>();
@@ -146,4 +153,24 @@ public class Vertex {
 		}
 	}
 	
+	/**
+	 * Sets the distance of this vertex for some algorithm to use.
+	 * @param distance The distance of the vertex
+	 */
+	public void setDistance(double distance){
+		this.distance = distance;
+	}
+	
+	public double getDistance(){
+		return this.distance;
+	}
+	
+	public void setPred(Vertex pred)
+	{
+		this.pred = pred;
+	}
+	
+	public Vertex getPred(){
+		return this.pred;
+	}
 }
