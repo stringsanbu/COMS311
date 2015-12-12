@@ -8,15 +8,19 @@ package cs311.hw7;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 
 
 public class CSGraph implements Graph<Object, Object> {
 	Map<String, Vertex> vertices = new HashMap<String, Vertex>();
 	Map<Integer, Edge> edges = new HashMap<Integer, Edge>();
+	List<Edge> listOfEdges = new ArrayList<Edge>();
 	List<String> noPredecessors = new ArrayList<String>();
 	private boolean isDirected;
 	private int vertexID = 0,
@@ -65,6 +69,7 @@ public class CSGraph implements Graph<Object, Object> {
 			oppositeVertex.removeEdge(eID);
 			oppositeVertex.removeNeighbor(vertexLabel);
 			edges.remove(eID);
+			listOfEdges.remove(edge);
 		}
 		noPredecessors.remove(vertexLabel);
 		vertices.remove(vertexLabel);
@@ -94,6 +99,7 @@ public class CSGraph implements Graph<Object, Object> {
 			noPredecessors.remove(targetLabel);
 		this.edgeID++;
 		this.numEdges--;
+		listOfEdges.add(edge);
 	}
 
 	@Override
@@ -229,8 +235,33 @@ public class CSGraph implements Graph<Object, Object> {
 
 	@Override
 	public Graph<Object, Object> minimumSpanningTree(EdgeMeasure<Object> measure) {
-		// TODO Auto-generated method stub
-		return null;
+		if(isDirected) return null;
+		// Going to follow Kruskal's Algorithm... Because that's the only one I can remember from heart (no Internet on plane)
+		// Hashmap<VERTEXDATA, EDGEDATA>
+		HashMap<Vertex, Set<Vertex>> forest = new HashMap<Vertex, Set<Vertex>>();
+		for(Entry<String, Vertex> entry : vertices.entrySet()){
+			Vertex vertex = entry.getValue();
+			Set<Vertex> vSet = new HashSet<Vertex>();
+			vSet.add(vertex);
+			forest.put(vertex, vSet);
+		}
+		EdgeMeasureComparator comparator = new EdgeMeasureComparator(measure);
+		Collections.sort(listOfEdges, comparator);
+		ArrayList<Edge> mst = new ArrayList<Edge>();
+		while(true){
+			Edge check = listOfEdges.remove(0);
+			
+			Set<Vertex> visited1 = forest.get(vertices.get(check.getSourceLabel()));
+			Set<Vertex> visited2 = forest.get(vertices.get(check.getSourceLabel()));
+			if(visited1.equals(visited2)) continue;
+			mst.add(check);
+			visited1.addAll(visited2);
+			for(Vertex i : visited1){
+				forest.put(i, visited1);
+			}
+			if(visited1.size() == vertices.size()) break;
+		}
+		return (Graph) mst;
 	}
 
 	@Override
